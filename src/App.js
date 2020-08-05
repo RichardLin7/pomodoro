@@ -3,7 +3,10 @@
 // have them displayed at all times... done
 
 // clicking submit re-render screen based on state (input main => input intermediate => timer => Q&A => break)... done
-// create/import countdown timer...
+// create/import countdown timer... done
+// alarm sounds when times up ... done
+// Q&A ...
+// with the 8 min timer...
 
 import React from "react";
 import Countdown from "react-countdown";
