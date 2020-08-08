@@ -6,7 +6,7 @@
 // create/import countdown timer... done
 // alarm sounds when times up ... done
 // Q&A ... done
-// with the 8 min timer... error resets if changing intermediate goal
+// with the 8 min timer... done
 
 import React from "react";
 import Countdown from "react-countdown";
@@ -19,7 +19,6 @@ class App extends React.Component {
       showMain,
       showInt,
       showTimer,
-      showQA,
       showBreakTimer,
     } = this.state;
 
@@ -45,38 +44,28 @@ class App extends React.Component {
             />
           )}
           {showTimer && (
-            <Countdown date={Date.now() + 2000} renderer={this._22Timer} />
+            <Countdown date={Date.now() + 1320000} renderer={this._22Timer} />
           )}
         </div>
       );
     }
-    if (showBreakTimer === true) {
+    if (showBreakTimer === true && finishedGoal === false) {
       return (
         <div>
           Main Goal: {this.state.mGoal}
           <p />
           Intermediate Goal: {this.state.iGoal}
           <p />
-          <Countdown date={Date.now() + 10000} renderer={this._8Timer} />
-          <div>
-            {showQA && (
-              <Question
-                showInt={() => this.hideComponent("showInt2")}
-                showTimer={() => this.hideComponent("showTimer")}
-                isFinished={this._isFinished}
-              />
-            )}
-            {showInt && (
-              <Intermediate
-                onClick={() => this.hideComponent("showInt")}
-                iGoal={this.state.iGoal}
-                onChange={this._intChange}
-              />
-            )}
-            {!showQA && !showInt && (
-              <div>Take a break for the remaining time.</div>
-            )}
-          </div>
+          <Countdown date={Date.now() + 480000} renderer={this._8Timer} />
+          <Question
+            showInt={() => this.hideComponent("showInt2")}
+            showTimer={() => this.hideComponent("showTimer")}
+            isFinished={this._isFinished}
+            breakOver={this._breakOver}
+            onClick={() => this.hideComponent("showInt")}
+            iGoal={this.state.iGoal}
+            onChange={this._intChange}
+          />
         </div>
       );
     }
@@ -94,7 +83,6 @@ class App extends React.Component {
       showInt: false,
       showTimer: false,
       showBreakTimer: false,
-      showQA: false,
       break: true,
       mGoal: "",
       iGoal: "",
@@ -128,13 +116,13 @@ class App extends React.Component {
   _breakOver() {
     this.audio.pause();
     this.setState({
-      showQA: false,
       showBreakTimer: false,
+      showTimer: true,
     });
   }
 
   _isFinished() {
-    this.setState({ finishedGoal: !this.state.finishedGoal });
+    this.setState({ finishedGoal: true });
   }
 
   _22Timer({ minutes, seconds, completed }) {
@@ -174,7 +162,6 @@ class App extends React.Component {
       );
     }
   }
-
   hideComponent(name) {
     switch (name) {
       case "showMain":
@@ -204,6 +191,141 @@ class App extends React.Component {
 }
 export default App;
 
+class Question extends React.Component {
+  render() {
+    const { showQuestion, showMet, showDone, newGoal, breakTime } = this.state;
+
+    if (showQuestion) {
+      return (
+        <div>
+          <p></p>
+          Was Intermediate Goal relevant?
+          <p></p>
+          <input
+            type="Submit"
+            value="Yes"
+            onClick={() => this.hideComponent("rGoal")}
+          />
+          <input
+            type="Submit"
+            value="No"
+            onClick={() => this.hideComponent("newGoal")}
+          />
+        </div>
+      );
+    }
+
+    if (showMet) {
+      return (
+        <div>
+          Has Intermediate Goal been met?
+          <p></p>
+          <input
+            type="Submit"
+            value="Yes"
+            onClick={() => this.hideComponent("met")}
+          />
+          <input
+            type="Submit"
+            value="No"
+            onClick={() => this.hideComponent("break")}
+          />
+        </div>
+      );
+    }
+
+    if (showDone) {
+      return (
+        <div>
+          Would you like to set a new Intermediate Goal or are you done with the
+          Main Goal?
+          <p></p>
+          <input
+            type="Submit"
+            value="New Intermediate Goal"
+            onClick={() => this.hideComponent("newGoal")}
+          />
+          <input
+            type="Submit"
+            value="Done with Main goal"
+            onClick={this.props.isFinished}
+          />
+        </div>
+      );
+    }
+
+    if (newGoal) {
+      return (
+        <div>
+          Please tell me your intermediate goal:
+          <input
+            type="text"
+            value={this.props.iGoal}
+            onChange={this.props.onChange}
+          />
+          <input
+            type="Submit"
+            value="Submit"
+            onClick={() => this.hideComponent("break")}
+          />
+        </div>
+      );
+    }
+
+    if (breakTime) {
+      return <div>Take a break for the remaining time.</div>;
+    }
+  }
+
+  constructor() {
+    super();
+    this.audio = new Audio(alarm);
+
+    this.state = {
+      showQuestion: true,
+      showMet: false,
+      showDone: false,
+      newGoal: false,
+      BreakTime: false,
+    };
+  }
+
+  hideComponent(name) {
+    switch (name) {
+      case "rGoal":
+        this.setState({
+          showQuestion: !this.state.showQuestion,
+          showMet: !this.state.showMet,
+        });
+        break;
+      case "met":
+        this.setState({
+          showMet: !this.state.showMet,
+          showDone: !this.state.showDone,
+        });
+        break;
+      case "newGoal":
+        this.setState({
+          showQuestion: false,
+          showMet: false,
+          showDone: false,
+          newGoal: true,
+        });
+        break;
+      case "break":
+        this.setState({
+          showMet: false,
+          showDone: false,
+          newGoal: false,
+          breakTime: true,
+        });
+        break;
+      default:
+        return;
+    }
+  }
+}
+
 class Main extends React.Component {
   render() {
     return (
@@ -232,91 +354,5 @@ class Intermediate extends React.Component {
         <input type="Submit" value="Submit" onClick={this.props.onClick} />
       </div>
     );
-  }
-}
-
-class Question extends React.Component {
-  render() {
-    const { showQuestion, showMet, showDone } = this.state;
-    if (showQuestion) {
-      return (
-        <div>
-          Was Intermediate Goal relevant?
-          <p></p>
-          <input
-            type="Submit"
-            value="Yes"
-            onClick={() => this.hideComponent("rGoal")}
-          />
-          <input type="Submit" value="No" onClick={this.props.showInt} />
-        </div>
-      );
-    }
-    if (showMet) {
-      return (
-        <div>
-          Has Intermediate Goal been met?
-          <p></p>
-          <input
-            type="Submit"
-            value="Yes"
-            onClick={() => this.hideComponent("met")}
-          />
-          <input type="Submit" value="No" onClick={this.props.showTimer} />
-        </div>
-      );
-    }
-    if (showDone) {
-      return (
-        <div>
-          Would you like to set a new Intermediate Goal or are you done with the
-          Main Goal?
-          <p></p>
-          <input
-            type="Submit"
-            value="New Intermediate Goal"
-            onClick={this.props.showInt}
-          />
-          <input
-            type="Submit"
-            value="Done with Main goal"
-            onClick={this.props.isFinished}
-          />
-        </div>
-      );
-    }
-  }
-  constructor() {
-    super();
-    this.state = {
-      showQuestion: true,
-      showMet: false,
-      showDone: false,
-    };
-
-    this._newGoal = this._newGoal.bind(this);
-  }
-
-  _newGoal() {
-    return <Intermediate />;
-  }
-
-  hideComponent(name) {
-    switch (name) {
-      case "rGoal":
-        this.setState({
-          showQuestion: !this.state.showQuestion,
-          showMet: !this.state.showMet,
-        });
-        break;
-      case "met":
-        this.setState({
-          showMet: !this.state.showMet,
-          showDone: !this.state.showDone,
-        });
-        break;
-      default:
-        return;
-    }
   }
 }
